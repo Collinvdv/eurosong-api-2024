@@ -33,6 +33,24 @@ app.get('/api/songs', (req, res) => {
     });
 });
 
+app.get('/api/ranking', (req, res) => {
+    const db = new Database();
+    db.getQuery(`
+        SELECT songs.song_id, songs.name AS song_name, artists.name AS artist_name, SUM(points) AS total_points
+        FROM
+            votes
+                INNER JOIN
+                    songs
+                        ON songs.song_id = votes.song_id
+                INNER JOIN
+                    artists
+                        ON songs.artist_id = artists.artist_id
+        GROUP BY song_id
+        ORDER BY SUM(points) DESC;
+    `).then((ranking) => {
+        res.send(ranking);
+    });
+});
 
 // Starten van de server en op welke port de server moet luistere
 app.listen(3000, () => {
