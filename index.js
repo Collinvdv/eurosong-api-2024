@@ -1,9 +1,13 @@
 // Importeren van de express module in node_modules
 const express = require('express');
+const bodyParser = require('body-parser');
 const Database = require('./classes/database.js');
 
 // Aanmaken van een express app
 const app = express();
+
+// Middleware om JSON-requests te parsen
+app.use(bodyParser.json());
 
 // Endpoints
 app.get('/', (req, res) => {
@@ -14,6 +18,13 @@ app.get('/api/artists', (req, res) => {
     const db = new Database();
     db.getQuery('SELECT * FROM artists').then((artists) => {
         res.send(artists);
+    });
+});
+
+app.get('/api/votes', (req, res) => {
+    const db = new Database();
+    db.getQuery('SELECT * FROM votes').then((votes) => {
+        res.send(votes);
     });
 });
 
@@ -50,6 +61,33 @@ app.get('/api/ranking', (req, res) => {
     `).then((ranking) => {
         res.send(ranking);
     });
+});
+
+app.post('/api/artists', (req, res) => {
+    console.log(req.body);
+    const { name } = req.body;
+    const db = new Database();
+    console.log(name);
+    db.getQuery('INSERT INTO artists (name) VALUES (?)', [name])
+        .then(() => res.status(201).send({ message: 'Artist added successfully' }))
+        .catch((error) => res.status(500).send({ error: 'Failed to add artist', details: error }));
+});
+
+app.post('/api/songs', (req, res) => {
+    const { name, artist_id } = req.body;
+    const db = new Database();
+    db.getQuery('INSERT INTO songs (name, artist_id) VALUES (?, ?)', [name, artist_id])
+        .then(() => res.status(201).send({ message: 'Song added successfully' }))
+        .catch((error) => res.status(500).send({ error: 'Failed to add song', details: error }));
+});
+
+// POST endpoint om een nieuwe stem toe te voegen
+app.post('/api/votes', (req, res) => {
+    const { song_id, points } = req.body;
+    const db = new Database();
+    db.getQuery('INSERT INTO votes (song_id, points) VALUES (?, ?)', [song_id, points])
+        .then(() => res.status(201).send({ message: 'Vote added successfully' }))
+        .catch((error) => res.status(500).send({ error: 'Failed to add vote', details: error }));
 });
 
 // Starten van de server en op welke port de server moet luistere
